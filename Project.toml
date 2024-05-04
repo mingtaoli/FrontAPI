@@ -1,0 +1,11 @@
+name = "FrontAPI"
+uuid = "892130a0-76c2-402e-87ad-cc2d2157d4d6"
+authors = ["mingtaoli <mingtao@xjtu.edu.cn>"]
+version = "0.1.0"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+LibPQ = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
+Oxygen = "df9a0d86-3283-4920-82dc-4555fc0d1d8b"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

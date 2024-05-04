@@ -1,0 +1,10 @@
+Name: juliauser-api
+Host: 0.0.0.0
+Port: 8888
+Database:
+  Type: postgresql
+  Host: localhost
+  Port: 5432
+  Dbname: ai4e-datacenter-postgres
+  User: ai4e_datacenter
+  Password: dlgcdxlgjzdsys1234
