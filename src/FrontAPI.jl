@@ -83,6 +83,7 @@ StructTypes.StructType(::Type{UserLoginRequest}) = StructTypes.Struct()
 # 相当于go-zero中的 logic 目录
 #***********************************************************************
 function UserLoginLogic(userloginrequest)
+    UserModel.FindOneByLoginRequest(userloginrequest)
     return "User logged in logic"
 end
 #-----------------------------------------------------------------------

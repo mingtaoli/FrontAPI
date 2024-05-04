@@ -19,6 +19,7 @@ const TableName = "users"
 #result=LibPQ.execute(conn, "SELECT * from users;")
 #using DataFrames
 #tabledata=DataFrame(result)
-
+function FindOneByLoginRequest(userloginrequest)
+end
 
 end
