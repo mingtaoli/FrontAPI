@@ -1,12 +1,12 @@
 
 module UserModel
 using LibPQ
-const DB_CONFIG=Dict(
-    "host"=>"localhost",
-    "port"=>5432,
-    "dbname"=>"ai4e-datacenter-postgres",
-    "user"=>"ai4e_datacenter",
-    "password"=>"dlgcdxlgjzdsys1234"
+const DB_CONFIG = Dict(
+    "host" => "localhost",
+    "port" => 5432,
+    "dbname" => "ai4e-datacenter-postgres",
+    "user" => "ai4e_datacenter",
+    "password" => "dlgcdxlgjzdsys1234"
 )
 
 #conn_str="host=$(DB_CONFIG["host"]) port=$(DB_CONFIG["port"]) dbname=$(DB_CONFIG["dbname"]) user=$(DB_CONFIG["user"]) password=$(DB_CONFIG["password"])"

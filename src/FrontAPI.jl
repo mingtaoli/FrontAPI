@@ -94,15 +94,15 @@ end
 #***********************************************************************
 function UserLoginHandler(request::HTTP.Request)
     # 先做反序列化得到UserLoginRequest
-    userloginrequest = json(request, UserLoginRequest)    
+    userloginrequest = json(request, UserLoginRequest)
     # 再调用UserLoginLogic处理登录逻辑
     UserLoginLogic(userloginrequest) #如果直接返回的就是UserLoginResponse类型，那就很OK了。会极大的简化代码
-    
- #   userloginrequest
- #   dump(userloginrequest) 调试用，确保收到了userloginrequest
+
+    #   userloginrequest
+    #   dump(userloginrequest) 调试用，确保收到了userloginrequest
 
     # 然后返回UserLoginResponse类型
-    return UserLoginResponse(1,"mingtaoli","token")#先手动返回
+    return UserLoginResponse(1, "mingtaoli", "token")#先手动返回
 end
 
 function RegisterHandlers()
@@ -113,9 +113,9 @@ end
 #-----------------------------------------------------------------------
 
 function serve()
-    host=CONFIG["server"]["host"]
-    port=CONFIG["server"]["port"]
-    Oxygen.serve(host=host, port=port,async = false, show_banner  = false)
+    host = CONFIG["server"]["host"]
+    port = CONFIG["server"]["port"]
+    Oxygen.serve(host=host, port=port, async=false, show_banner=false)
 end
 
 end # module
