@@ -1,24 +1,24 @@
 
 module UserModel
 using LibPQ
-const db_config=Dict(
+const DB_CONFIG=Dict(
     "host"=>"localhost",
-    "port"=>"5432",
+    "port"=>5432,
     "dbname"=>"ai4e-datacenter-postgres",
     "user"=>"ai4e_datacenter",
     "password"=>"dlgcdxlgjzdsys1234"
 )
 
-conn_str="host=$(db_config["host"]) port=$(db_config["port"]) dbname=$(db_config["dbname"]) user=$(db_config["user"]) password=$(db_config["password"])"
+#conn_str="host=$(DB_CONFIG["host"]) port=$(DB_CONFIG["port"]) dbname=$(DB_CONFIG["dbname"]) user=$(DB_CONFIG["user"]) password=$(DB_CONFIG["password"])"
 
-const conn=LibPQ.Connection(conn_str)
+#const conn=LibPQ.Connection(conn_str)
 
-const tablename = "users"
+const TableName = "users"
 
 
-result=LibPQ.execute(conn, "SELECT * from users;")
-using DataFrames
-tabledata=DataFrame(result)
+#result=LibPQ.execute(conn, "SELECT * from users;")
+#using DataFrames
+#tabledata=DataFrame(result)
 
 
 end

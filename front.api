@@ -1,0 +1,26 @@
+syntax = "v1"
+
+info (
+	title:   "Ai4E 能源管理系统用户api"
+	desc:    "Ai4E 能源管理系统用户"
+	author:  "Mingtao Li"
+	email:   "mingtao@xjtu.edu.cn"
+	version: "v1"
+)
+
+type (
+	UserLoginRequest {
+		Loginname string `json:"loginname"`
+		Password  string `json:"password"`
+	}
+	UserLoginResponse {
+		UserID    int64  `json:"userid"`
+		Loginname string `json:"loginname"`
+		Token     string `json:"token"`
+	}
+)
+
+service user-api {
+	@handler UserLoginHandler
+	post /user/login (UserLoginRequest) returns (UserLoginResponse)
+}
