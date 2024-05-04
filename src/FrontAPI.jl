@@ -1,5 +1,6 @@
 module FrontAPI
 using Oxygen, HTTP
+using StructTypes
 
 
 
@@ -72,6 +73,8 @@ mutable struct UserLoginResponse
     loginname::String
     token::String
 end
+
+StructTypes.StructType(::Type{UserLoginRequest}) = StructTypes.Struct()
 #-----------------------------------------------------------------------
 # 到此相当于 types 目录结束
 #-----------------------------------------------------------------------
@@ -79,7 +82,7 @@ end
 #***********************************************************************
 # 相当于go-zero中的 logic 目录
 #***********************************************************************
-function UserLoginLogic()
+function UserLoginLogic(userloginrequest)
     return "User logged in logic"
 end
 #-----------------------------------------------------------------------
@@ -90,9 +93,16 @@ end
 # 相当于go-zero中的 routes 目录
 #***********************************************************************
 function UserLoginHandler(request::HTTP.Request)
+    # 先做反序列化得到UserLoginRequest
+    userloginrequest = json(request, UserLoginRequest)    
+    # 再调用UserLoginLogic处理登录逻辑
+    UserLoginLogic(userloginrequest) #如果直接返回的就是UserLoginResponse类型，那就很OK了。会极大的简化代码
     
-    UserLoginLogic()
-    return HTTP.Response(200, "User logged in successfully!")
+ #   userloginrequest
+ #   dump(userloginrequest) 调试用，确保收到了userloginrequest
+
+    # 然后返回UserLoginResponse类型
+    return UserLoginResponse(1,"mingtaoli","token")#先手动返回
 end
 
 function RegisterHandlers()
