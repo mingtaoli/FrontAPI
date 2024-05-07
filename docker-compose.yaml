@@ -1,0 +1,32 @@
+services:
+
+  ai4e-datacenter-postgres:
+    image: postgres:16.2
+    container_name: ai4e-datacenter-postgres
+    environment:
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: ai4e-datacenter-postgres
+      POSTGRES_USER: ai4e_datacenter
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./datacenter/postgres:/var/lib/postgresql/data
+    networks:
+      ai4energynetwork:
+        ipv4_address: 172.20.0.5
+
+  adminer:
+    image: adminer:4.8.0
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      ai4energynetwork:
+        ipv4_address: 172.20.0.6
+
+networks:
+  ai4energynetwork:
+    external: true
+
+# 在docker-compose启动前，用如下命令创建一个网络
+# docker network create --driver=bridge --subnet=172.20.0.0/16 ai4energynetwork

@@ -8,6 +8,8 @@ using YAML
 const CONFIG_FILE = joinpath(@__DIR__, "..", "etc", "front-api.yaml")
 
 
+
+
 function main()
     config = YAML.load_file(CONFIG_FILE)
     FrontAPI.setupconfig(config)

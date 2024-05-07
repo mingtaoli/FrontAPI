@@ -2,7 +2,12 @@ module FrontAPI
 using Oxygen, HTTP
 using StructTypes
 
+mutable struct ServiceContext
+    connection::LibPQ.Connection
+    config::Dict{String, Any}
+end
 
+global SVCCONTEXT = nothing
 
 #***********************************************************************
 # 相当于go-zero中的 config 目录
@@ -55,7 +60,17 @@ function setupservicecontext(config)
     UserModel.DB_CONFIG["dbname"] = config["Database"]["Dbname"]
     UserModel.DB_CONFIG["user"] = config["Database"]["User"]
     UserModel.DB_CONFIG["password"] = config["Database"]["Password"]
+
+    connection = LibPQ.Connection("your connection string")
+    config = Dict("host" => "localhost", "port" => 5432)
+    global SVCCONTEXT = ServiceContext(connection, config)
 end
+
+function cleanup()
+    close(SVCCONTEXT.connection)
+    println("Resources cleaned up.")
+end
+
 #-----------------------------------------------------------------------
 # 到此相当于 svc 目录结束
 #-----------------------------------------------------------------------
