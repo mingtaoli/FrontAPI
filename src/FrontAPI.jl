@@ -2,12 +2,14 @@ module FrontAPI
 using Oxygen, HTTP
 using StructTypes
 
-mutable struct ServiceContext
-    connection::LibPQ.Connection
-    config::Dict{String, Any}
-end
-
-global SVCCONTEXT = nothing
+#***********************************************************************
+# 相当于go-zero中的 models 目录
+#***********************************************************************
+include("UserModel.jl")
+using .UserModel
+#-----------------------------------------------------------------------
+# 到此相当于 models 目录结束
+#-----------------------------------------------------------------------
 
 #***********************************************************************
 # 相当于go-zero中的 config 目录
@@ -30,19 +32,18 @@ const CONFIG = Dict(
 # 到此相当于 config 目录结束
 #-----------------------------------------------------------------------
 
-#***********************************************************************
-# 相当于go-zero中的 models 目录
-#***********************************************************************
-include("UserModel.jl")
-using .UserModel
-#-----------------------------------------------------------------------
-# 到此相当于 models 目录结束
-#-----------------------------------------------------------------------
 
 
 #***********************************************************************
 # 相当于go-zero中的 svc 目录
 #***********************************************************************
+
+mutable struct ServiceContext
+    config::Dict{String, Any}
+    usermodel::UserModel.AbstractUserModel
+end
+
+const SVCCONTEXT = Ref{ServiceContext}(ServiceContext())
 function setupconfig(config)
     # CONFIG["host"]=config["Host"]
     # CONFIG["port"]=config["Port"]
