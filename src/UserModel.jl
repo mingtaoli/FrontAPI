@@ -17,18 +17,18 @@ const DBCONFIG = Ref{DBConfig}()
 # 定义一个通用的用户模型驱动类型
 abstract type UserModelDriver end
 
-struct PGUsersModel <: UserModelDriver
+struct UserModelPGDriver <: UserModelDriver
     connection::LibPQ.Connection
     tablename::String
-    function PGUsersModel(connection::LibPQ.Connection)
+    function UserModelPGDriver(connection::LibPQ.Connection)
         new(connection, "public.users")
     end
 end
 
-struct MySQLUsersModel <: UserModelDriver
+struct UserModelMySQLDriver <: UserModelDriver
     connection::MySQL.Connection
     tablename::String
-    function MySQLUsersModel(connection::MySQL.Connection)
+    function UserModelMySQLDriver(connection::MySQL.Connection)
         new(connection, "users")
     end
 end
@@ -66,25 +66,25 @@ function init_data_source(db_config::DBConfig)::UserModelDriver
     conn_str = get_conn_str(db_config)
     if db_config.type == "postgresql"
         connection = LibPQ.Connection(conn_str)
-        return PGUsersModel(connection)
+        return UserModelPGDriver(connection)
     elseif db_config.type == "mysql"
         connection = MySQL.Connection(conn_str)
-        return MySQLUsersModel(connection)
+        return UserModelMySQLDriver(connection)
     else
         throw(ArgumentError("Unsupported database type: $(db_config.type)"))
     end
 end
 
-function close(driver::PGUsersModel)
+function close(driver::UserModelPGDriver)
     close(driver.connection)
 end
 
-function close(driver::MySQLUsersModel)
+function close(driver::UserModelMySQLDriver)
     MySQL.disconnect(driver.connection)
 end
 
 # 根据用户ID删除
-function delete_user(userid::Int64, driver::PGUsersModel)::Bool
+function delete_user(userid::Int64, driver::UserModelPGDriver)::Bool
     query = "DELETE FROM $(driver.tablename) WHERE userid = \$1"
     try
         LibPQ.execute(driver.connection, query, [userid])
@@ -96,7 +96,7 @@ function delete_user(userid::Int64, driver::PGUsersModel)::Bool
     return true
 end
 
-function delete_user(userid::Int64, driver::MySQLUsersModel)::Bool
+function delete_user(userid::Int64, driver::UserModelMySQLDriver)::Bool
     query = "DELETE FROM $(driver.tablename) WHERE userid = ?"
     try
         MySQL.execute(driver.connection, query, userid)
@@ -109,7 +109,7 @@ function delete_user(userid::Int64, driver::MySQLUsersModel)::Bool
 end
 
 # 根据用户ID查找单个用户
-function find_one_by_userid(userid::Int64, driver::PGUsersModel)::Union{User, Nothing}
+function find_one_by_userid(userid::Int64, driver::UserModelPGDriver)::Union{User, Nothing}
     query = "SELECT * FROM $(driver.tablename) WHERE userid = \$1 LIMIT 1"
     result = LibPQ.execute(driver.connection, query, [userid])
 
@@ -125,7 +125,7 @@ function find_one_by_userid(userid::Int64, driver::PGUsersModel)::Union{User, No
     end
 end
 
-function find_one_by_userid(userid::Int64, driver::MySQLUsersModel)::Union{User, Nothing}
+function find_one_by_userid(userid::Int64, driver::UserModelMySQLDriver)::Union{User, Nothing}
     query = "SELECT * FROM $(driver.tablename) WHERE userid = ? LIMIT 1"
     result = MySQL.execute(driver.connection, query, userid)
 
@@ -142,7 +142,7 @@ function find_one_by_userid(userid::Int64, driver::MySQLUsersModel)::Union{User,
 end
 
 # 根据登录名查找单个用户
-function find_one_by_loginname(loginname::String, driver::PGUsersModel)::Union{User, Nothing}
+function find_one_by_loginname(loginname::String, driver::UserModelPGDriver)::Union{User, Nothing}
     query = "SELECT * FROM $(driver.tablename) WHERE loginname = \$1 LIMIT 1"
     result = LibPQ.execute(driver.connection, query, [loginname])
 
@@ -158,7 +158,7 @@ function find_one_by_loginname(loginname::String, driver::PGUsersModel)::Union{U
     end
 end
 
-function find_one_by_loginname(loginname::String, driver::MySQLUsersModel)::Union{User, Nothing}
+function find_one_by_loginname(loginname::String, driver::UserModelMySQLDriver)::Union{User, Nothing}
     query = "SELECT * FROM $(driver.tablename) WHERE loginname = ? LIMIT 1"
     result = MySQL.execute(driver.connection, query, loginname)
 
@@ -175,7 +175,7 @@ function find_one_by_loginname(loginname::String, driver::MySQLUsersModel)::Unio
 end
 
 # 插入新的用户数据
-function insert_user(data::User, driver::PGUsersModel)::Bool
+function insert_user(data::User, driver::UserModelPGDriver)::Bool
     query = "INSERT INTO $(driver.tablename) (userid, loginname, password, email, phone, enableflag, nickname, avatarurl, createdtime, deleted) " *
             "VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10)"
     try
@@ -193,7 +193,7 @@ function insert_user(data::User, driver::PGUsersModel)::Bool
     end
 end
 
-function insert_user(data::User, driver::MySQLUsersModel)::Bool
+function insert_user(data::User, driver::UserModelMySQLDriver)::Bool
     query = "INSERT INTO $(driver.tablename) (userid, loginname, password, email, phone, enableflag, nickname, avatarurl, createdtime, deleted) " *
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     try
@@ -212,7 +212,7 @@ function insert_user(data::User, driver::MySQLUsersModel)::Bool
 end
 
 # 更新用户数据
-function update_user(data::User, driver::PGUsersModel)::Bool
+function update_user(data::User, driver::UserModelPGDriver)::Bool
     query = "UPDATE $(driver.tablename) SET loginname = \$2, password = \$3, email = \$4, phone = \$5, enableflag = \$6, " *
             "nickname = \$7, avatarurl = \$8, createdtime = \$9, deleted = \$10 WHERE userid = \$1"
     try
@@ -230,7 +230,7 @@ function update_user(data::User, driver::PGUsersModel)::Bool
     end
 end
 
-function update_user(data::User, driver::MySQLUsersModel)::Bool
+function update_user(data::User, driver::UserModelMySQLDriver)::Bool
     query = "UPDATE $(driver.tablename) SET loginname = ?, password = ?, email = ?, phone = ?, enableflag = ?, " *
             "nickname = ?, avatarurl = ?, createdtime = ?, deleted = ? WHERE userid = ?"
     try
