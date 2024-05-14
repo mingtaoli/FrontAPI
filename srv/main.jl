@@ -1,26 +1,31 @@
-#using Pkg
-#Pkg.activate(".")
-#Pkg.instantiate()
-
-using FrontAPI
-using YAML
-
-const CONFIG_FILE = joinpath(@__DIR__, "..", "etc", "front-api.yaml")
-
-
-
+using .FrontAPI
 
 function main()
-    config = YAML.load_file(CONFIG_FILE)
-    FrontAPI.setupconfig(config)
+    # 获取当前工作目录
+    cwd = pwd()
+    println("Current working directory:", cwd)
+    
+    # 解析命令行参数（如果有的话）
+    # 注意：Julia 中的命令行参数解析可以使用 ArgParse.jl 或其他包，这里假设你已经处理了
 
-    FrontAPI.setupserver(config)
+    # 读取配置文件并初始化配置
+    const CONFIG = FrontAPI.load_config("path/to/config.yaml")
+    
+    # 打印配置信息
+    println("App Name: ", CONFIG.name)
+    println("Server Host: ", CONFIG.server.host)
+    println("Server Port: ", CONFIG.server.port)
+    println("Database Type: ", CONFIG.database.type)
+    println("Database Name: ", CONFIG.database.dbname)
 
-    FrontAPI.setupservicecontext(config)
+    # 初始化ServiceContext并设置全局变量
+    FrontAPI.SVCCONTEXT[] = FrontAPI.new_service_context(CONFIG)
+    
+    # 注册路由处理程序
     FrontAPI.RegisterHandlers()
-    host = config["Host"]
-    port = config["Port"]
-    println("Server will start at $host:$port...")
+
+    # 启动服务器
+    println("Starting server at $(CONFIG.server.host):$(CONFIG.server.port)...")
     FrontAPI.serve()
 end
 

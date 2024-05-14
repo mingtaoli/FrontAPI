@@ -1,138 +1,101 @@
 module FrontAPI
 using Oxygen, HTTP
 using StructTypes
+using YAML
+using LibPQ
+using MySQL
 
-#***********************************************************************
-# 相当于go-zero中的 models 目录
-#***********************************************************************
 include("UserModel.jl")
 using .UserModel
-#-----------------------------------------------------------------------
-# 到此相当于 models 目录结束
-#-----------------------------------------------------------------------
 
-#***********************************************************************
-# 相当于go-zero中的 config 目录
-#***********************************************************************
-const CONFIG = Dict(
-    "server" => Dict(
-        "host" => "localhost",
-        "port" => 8000
-    ),
-    "database" => Dict(
-        "host" => "localhost",
-        "port" => "5432",
-        "dbname" => "ai4e-datacenter-postgres",
-        "user" => "ai4e_datacenter",
-        "password" => "dlgcdxlgjzdsys1234"
-    )
-)
-
-#-----------------------------------------------------------------------
-# 到此相当于 config 目录结束
-#-----------------------------------------------------------------------
-
-
-
-#***********************************************************************
-# 相当于go-zero中的 svc 目录
-#***********************************************************************
-
-mutable struct ServiceContext
-    config::Dict{String, Any}
-    usermodel::UserModel.AbstractUserModel
+# 定义不可变的结构体
+struct ServerConfig
+    host::String
+    port::Int
 end
 
-const SVCCONTEXT = Ref{ServiceContext}(ServiceContext())
-function setupconfig(config)
-    # CONFIG["host"]=config["Host"]
-    # CONFIG["port"]=config["Port"]
-end
-
-function setupserver(config)
-    CONFIG["server"]["host"] = config["Host"]
-    CONFIG["server"]["port"] = config["Port"]
-end
-
-function setupservicecontext(config)
-    UserModel.DB_CONFIG["type"] = config["Database"]["Type"]
-    UserModel.DB_CONFIG["host"] = config["Database"]["Host"]
-    UserModel.DB_CONFIG["port"] = config["Database"]["Port"]
-    UserModel.DB_CONFIG["dbname"] = config["Database"]["Dbname"]
-    UserModel.DB_CONFIG["user"] = config["Database"]["User"]
-    UserModel.DB_CONFIG["password"] = config["Database"]["Password"]
-
-    connection = LibPQ.Connection("your connection string")
-    config = Dict("host" => "localhost", "port" => 5432)
-    global SVCCONTEXT = ServiceContext(connection, config)
-end
-
-function cleanup()
-    close(SVCCONTEXT.connection)
-    println("Resources cleaned up.")
-end
-
-#-----------------------------------------------------------------------
-# 到此相当于 svc 目录结束
-#-----------------------------------------------------------------------
-
-#***********************************************************************
-# 相当于go-zero中的 types 目录
-#***********************************************************************
-mutable struct UserLoginRequest
-    loginname::String
+struct DatabaseConfig
+    type::String
+    host::String
+    port::Int
+    dbname::String
+    user::String
     password::String
 end
 
-mutable struct UserLoginResponse
-    userid::Int64
-    loginname::String
-    token::String
+struct AppConfig
+    name::String
+    server::ServerConfig
+    database::DatabaseConfig
 end
 
-StructTypes.StructType(::Type{UserLoginRequest}) = StructTypes.Struct()
-#-----------------------------------------------------------------------
-# 到此相当于 types 目录结束
-#-----------------------------------------------------------------------
-
-#***********************************************************************
-# 相当于go-zero中的 logic 目录
-#***********************************************************************
-function UserLoginLogic(userloginrequest)
-    UserModel.FindOneByLoginRequest(userloginrequest)
-    return "User logged in logic"
+mutable struct ServiceContext
+    config::AppConfig
+    user_model_driver::UserModel.UserModelDriver
 end
-#-----------------------------------------------------------------------
-# 到此相当于 logic 目录结束
-#-----------------------------------------------------------------------
 
-#***********************************************************************
-# 相当于go-zero中的 routes 目录
-#***********************************************************************
-function UserLoginHandler(request::HTTP.Request)
-    # 先做反序列化得到UserLoginRequest
-    userloginrequest = json(request, UserLoginRequest)
-    # 再调用UserLoginLogic处理登录逻辑
-    UserLoginLogic(userloginrequest) #如果直接返回的就是UserLoginResponse类型，那就很OK了。会极大的简化代码
+# 全局服务上下文变量
+const SVCCONTEXT = Ref{ServiceContext}()
 
-    #   userloginrequest
-    #   dump(userloginrequest) 调试用，确保收到了userloginrequest
+# 读取配置文件并初始化配置
+function load_config(filename::String)::AppConfig
+    config = YAML.load_file(filename)
+    server_config = ServerConfig(config["Host"], config["Port"])
+    database_config = DatabaseConfig(
+        config["Database"]["Type"],
+        config["Database"]["Host"],
+        config["Database"]["Port"],
+        config["Database"]["Dbname"],
+        config["Database"]["User"],
+        config["Database"]["Password"]
+    )
+    return AppConfig(config["Name"], server_config, database_config)
+end
 
-    # 然后返回UserLoginResponse类型
-    return UserLoginResponse(1, "mingtaoli", "token")#先手动返回
+function new_service_context(config::AppConfig)::ServiceContext
+    db_config = DBConfig(
+        config.database.type,
+        config.database.host,
+        config.database.port,
+        config.database.dbname,
+        config.database.user,
+        config.database.password
+    )
+    UserModel.DBCONFIG[] = db_config
+    user_model_driver = UserModel.init_data_source(db_config)
+    return ServiceContext(config, user_model_driver)
+end
+
+function serve()
+    host = SVCCONTEXT[].config.server.host
+    port = SVCCONTEXT[].config.server.port
+    Oxygen.serve(host=host, port=port, async=false, show_banner=false)
 end
 
 function RegisterHandlers()
     Oxygen.route([Oxygen.POST], "/user/login", UserLoginHandler)
 end
-#-----------------------------------------------------------------------
-# 到此相当于 routes 目录结束
-#-----------------------------------------------------------------------
 
-function serve()
-    host = CONFIG["server"]["host"]
-    port = CONFIG["server"]["port"]
-    Oxygen.serve(host=host, port=port, async=false, show_banner=false)
+function UserLoginHandler(request::HTTP.Request)
+    # 先做反序列化得到UserLoginRequest
+    userloginrequest = json(request, UserLoginRequest)
+    
+    # 调用登录函数处理登录逻辑
+    response = login(userloginrequest, SVCCONTEXT[])
+    
+    # 返回UserLoginResponse类型
+    return UserLoginResponse(response.userid, response.loginname, response.token)
+end
+
+# 实现独立的登录函数
+function login(userloginrequest::UserLoginRequest, svc_ctx::ServiceContext)::UserLoginResponse
+    user = UserModel.find_one_by_loginname(userloginrequest.loginname, svc_ctx.user_model_driver)
+    if user !== nothing && user.password == userloginrequest.password
+        token = "some_generated_token"  # 生成一个令牌
+        return UserLoginResponse(user.userid, user.loginname, token)
+    else
+        throw(HTTP.ErrorResponse(401, "Unauthorized"))
+    end
 end
 
 end # module
