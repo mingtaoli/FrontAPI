@@ -62,7 +62,7 @@ function get_conn_str(db_config::DBConfig)::String
 end
 
 # 初始化和关闭数据源
-function init_data_source(db_config::DBConfig)::UserModelDriver
+function setup_data_source(db_config::DBConfig)::UserModelDriver
     conn_str = get_conn_str(db_config)
     if db_config.type == "postgresql"
         connection = LibPQ.Connection(conn_str)

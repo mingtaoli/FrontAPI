@@ -62,7 +62,7 @@ function new_service_context(config::AppConfig)::ServiceContext
         config.database.password
     )
     UserModel.DBCONFIG[] = db_config
-    user_model_driver = UserModel.init_data_source(db_config)
+    user_model_driver = UserModel.setup_data_source(db_config)
     return ServiceContext(config, user_model_driver)
 end
 
