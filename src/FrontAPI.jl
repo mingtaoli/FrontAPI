@@ -31,6 +31,7 @@ end
 
 mutable struct ServiceContext
     config::AppConfig
+    oxygencontext::Oxygen.Context
     user_model_driver::UserModel.UserModelDriver
 end
 
@@ -52,7 +53,7 @@ function load_config(filename::String)::AppConfig
     return AppConfig(config["Name"], server_config, database_config)
 end
 
-function new_service_context(config::AppConfig)::ServiceContext
+function setup_service_context(config::AppConfig)::ServiceContext
     db_config = DBConfig(
         config.database.type,
         config.database.host,
@@ -63,7 +64,8 @@ function new_service_context(config::AppConfig)::ServiceContext
     )
     UserModel.DBCONFIG[] = db_config
     user_model_driver = UserModel.setup_data_source(db_config)
-    return ServiceContext(config, user_model_driver)
+    oxygencontext=Oxygen.CONTEXT[]
+    SVCCONTEXT[]=ServiceContext(config, oxygencontext, user_model_driver)
 end
 
 function serve()

@@ -19,7 +19,7 @@ function main()
     println("Database Name: ", CONFIG.database.dbname)
 
     # 初始化ServiceContext并设置全局变量
-    FrontAPI.SVCCONTEXT[] = FrontAPI.new_service_context(CONFIG)
+    FrontAPI.setup_service_context(CONFIG)
     
     # 注册路由处理程序
     FrontAPI.RegisterHandlers()
