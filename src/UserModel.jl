@@ -61,13 +61,15 @@ function get_conn_str(db_config::DBConfig)::String
     end
 end
 
+
 # 初始化和关闭数据源
-function setup_model_driver(db_config::DBConfig)::UserModelDriver
-    conn_str = get_conn_str(db_config)
-    if db_config.type == "postgresql"
+function setup_model_driver()::UserModelDriver
+    dbconfig=DBCONFIG[]
+    conn_str = get_conn_str(dbconfig)
+    if dbconfig.type == "postgresql"
         connection = LibPQ.Connection(conn_str)
         return UserModelPGDriver(connection)
-    elseif db_config.type == "mysql"
+    elseif dbconfig.type == "mysql"
         connection = MySQL.Connection(conn_str)
         return UserModelMySQLDriver(connection)
     else

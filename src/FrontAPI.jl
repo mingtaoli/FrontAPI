@@ -54,7 +54,7 @@ function load_config(filename::String)::AppConfig
 end
 
 function setup_service_context(config::AppConfig)::ServiceContext
-    dbconfig = DBConfig(
+    UserModel.DBCONFIG[] = UserModel.DBConfig(
         config.database.type,
         config.database.host,
         config.database.port,
@@ -62,8 +62,7 @@ function setup_service_context(config::AppConfig)::ServiceContext
         config.database.user,
         config.database.password
     )
-    UserModel.DBCONFIG[] = dbconfig
-    user_model_driver = UserModel.setup_model_driver(dbconfig)
+    user_model_driver = UserModel.setup_model_driver()
     oxygencontext=Oxygen.CONTEXT[]
     SVCCONTEXT[]=ServiceContext(config, oxygencontext, user_model_driver)
 end
