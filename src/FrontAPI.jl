@@ -2,8 +2,6 @@ module FrontAPI
 using Oxygen, HTTP
 using StructTypes
 using YAML
-using LibPQ
-using MySQL
 
 include("UserModel.jl")
 using .UserModel
@@ -65,6 +63,17 @@ function setup_service_context(config::AppConfig)::ServiceContext
     user_model_driver = UserModel.setup_model_driver()
     oxygencontext=Oxygen.CONTEXT[]
     SVCCONTEXT[]=ServiceContext(config, oxygencontext, user_model_driver)
+end
+
+mutable struct UserLoginRequest
+    loginname::String
+    password::String
+end
+
+mutable struct UserLoginResponse
+    userid::Int64
+    loginname::String
+    token::String
 end
 
 function serve()
