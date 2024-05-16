@@ -54,7 +54,7 @@ function load_config(filename::String)::AppConfig
 end
 
 function setup_service_context(config::AppConfig)::ServiceContext
-    db_config = DBConfig(
+    dbconfig = DBConfig(
         config.database.type,
         config.database.host,
         config.database.port,
@@ -62,8 +62,8 @@ function setup_service_context(config::AppConfig)::ServiceContext
         config.database.user,
         config.database.password
     )
-    UserModel.DBCONFIG[] = db_config
-    user_model_driver = UserModel.setup_data_source(db_config)
+    UserModel.DBCONFIG[] = dbconfig
+    user_model_driver = UserModel.setup_model_driver(dbconfig)
     oxygencontext=Oxygen.CONTEXT[]
     SVCCONTEXT[]=ServiceContext(config, oxygencontext, user_model_driver)
 end
@@ -75,21 +75,21 @@ function serve()
 end
 
 function RegisterHandlers()
-    Oxygen.route([Oxygen.POST], "/user/login", UserLoginHandler)
+    Oxygen.route([Oxygen.POST], "/user/login", UserLogin)
 end
 
-function UserLoginHandler(request::HTTP.Request)
+function UserLogin(request::HTTP.Request)
     # 先做反序列化得到UserLoginRequest
     userloginrequest = json(request, UserLoginRequest)
     
-    # 调用登录函数处理登录逻辑
+    # 如果需要才调用外部函数处理登录逻辑 否则，直接把logic写在这里就可以了。
     response = login(userloginrequest, SVCCONTEXT[])
     
     # 返回UserLoginResponse类型
     return UserLoginResponse(response.userid, response.loginname, response.token)
 end
 
-# 实现独立的登录函数
+# 这个就是类似go-zero中的logic函数，如非必要不要这个单独的userlogic，直接在handler里写就很好了。
 function login(userloginrequest::UserLoginRequest, svc_ctx::ServiceContext)::UserLoginResponse
     user = UserModel.find_one_by_loginname(userloginrequest.loginname, svc_ctx.user_model_driver)
     if user !== nothing && user.password == userloginrequest.password
